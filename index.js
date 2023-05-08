@@ -196,74 +196,94 @@ window.onload = () =>
                 tetromino.update(i => ++tetromino.y[i]);
         }
         else {
-    // Aktualisiert die Anzeige von Spielstand und abgeschlossenen Zeilen
-    scoreLbl.innerText = score;
-    linesLbl.innerText = lines;
-
-    // Erstellt ein neues, zufälliges Tetromino
-    tetromino = (({ x, y }, color) =>
-        new Tetromino([...x], [...y], color)
-    )(
-        TETROMINOES[Math.floor(Math.random() * (TETROMINOES.length - 1))],
-        Math.floor(Math.random() * (Tetromino.COLORS.length - 1))
-    );
-
-    tetromino.draw();
-}
-// Pause-Logik
-let isPaused = false;
-
-function checkGameOver() {
-    for (let y = 0; y < MIN_VALID_ROW; y++) {
-        if (FIELD[y].some(block => block !== false)) {
-            alert("You have lost!");
-            reset();
-            return true;
-        }
-    }
-    return false;
-}
-
-function draw() {
-    if (!isPaused) {
-        if (tetromino) {
-            if (tetromino.collides(i => ({ x: tetromino.x[i], y: tetromino.y[i] + 1 }))) {
-                tetromino.merge();
-                if (checkGameOver()) {
-                    return;
-                }
-                tetromino = null;
-            } else {
-                tetromino.update(i => ++tetromino.y[i]);
-            }
-        } else {
+            // Aktualisiert die Anzeige von Spielstand und abgeschlossenen Zeilen
             scoreLbl.innerText = score;
             linesLbl.innerText = lines;
+        
+            // Erstellt ein neues, zufälliges Tetromino
             tetromino = (({ x, y }, color) =>
                 new Tetromino([...x], [...y], color)
             )(
                 TETROMINOES[Math.floor(Math.random() * (TETROMINOES.length - 1))],
                 Math.floor(Math.random() * (Tetromino.COLORS.length - 1))
             );
+        
             tetromino.draw();
         }
-    }
-
-    setTimeout(draw, delay);
-}
-
-//Steuerung
-window.onkeydown = event => {
-    switch (event.key) {
-        case "a":
-            if (!tetromino.collides(i => ({ x: tetromino.x[i] - 1, y: tetromino.y[i] })))
-                tetromino.update(i => --tetromino.x[i]);
-            break;
-        case "d":
-            if (!tetromino.collides(i => ({ x: tetromino.x[i] + 1, y: tetromino.y[i] })))
-                tetromino.update(i => ++tetromino.x[i]);
-            break;
-        case "s":
+        // Pause-Logik
+        let isPaused = false;
+        
+        function checkGameOver() {
+            for (let y = 0; y < MIN_VALID_ROW; y++) {
+                if (FIELD[y].some(block => block !== false)) {
+                    alert("You have lost!");
+                    reset();
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function draw() {
+            if (!isPaused) {
+                if (tetromino) {
+                    if (tetromino.collides(i => ({ x: tetromino.x[i], y: tetromino.y[i] + 1 }))) {
+                        tetromino.merge();
+                        if (checkGameOver()) {
+                            return;
+                        }
+                        tetromino = null;
+        
+                        // Berechnung der abgeschlossenen Zeilen
+                        let completedRows = 0;
+                        for (let y = FIELD_HEIGHT - 1; y >= MIN_VALID_ROW; --y)
+                            if (FIELD[y].every(e => e !== false)) {
+                                for (let ay = y; ay >= MIN_VALID_ROW; --ay)
+                                    FIELD[ay] = [...FIELD[ay - 1]];
+        
+                                ++completedRows;
+        
+                                ++y;
+                            }
+        
+                        if (completedRows) {
+                            // Aktualisiert den Spielstand und die Anzahl der abgeschlossenen Zeilen
+                            score += [40, 100, 300, 1200][completedRows - 1];
+                            lines += completedRows;
+                        }
+                    } else {
+                        tetromino.update(i => ++tetromino.y[i]);
+                    }
+                } else {
+                    scoreLbl.innerText = score;
+                    linesLbl.innerText = lines;
+                    tetromino = (({ x, y }, color) =>
+                        new Tetromino([...x], [...y], color)
+                    )(
+                        TETROMINOES[Math.floor(Math.random() * (TETROMINOES.length - 1))],
+                        Math.floor(Math.random() * (Tetromino.COLORS.length - 1))
+                    );
+                    tetromino.draw();
+                }
+            }
+        
+            setTimeout(draw, delay);
+        }
+        
+        //Steuerung
+        window.onkeydown = event => {
+            switch (event.key) {
+                case "a":
+                    if (!tetromino.collides(i => ({ x: tetromino.x[i] - 1, y: tetromino.y[i] })))
+                        tetromino.update(i => --tetromino.x[i]);
+                    break;
+                case "d":
+                    if (!tetromino.collides(i => ({ x: tetromino.x[i] + 1, y: tetromino.y[i] })))
+                        tetromino.update(i => ++tetromino.x[i]);
+                    break;
+                case "s":
+                    delay = Tetromino.DELAY / Tetromino
+        
             delay = Tetromino.DELAY / Tetromino.DELAY_INCREASED;
             break;
         case " ":
